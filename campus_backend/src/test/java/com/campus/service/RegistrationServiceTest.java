@@ -164,6 +164,7 @@ class RegistrationServiceTest {
         when(registrationMapper.findByActivityIdAndStatus(activityId, "候补")).thenReturn(Collections.emptyList());
 
         // 4. 拦截写操作：
+        when(activityService.addWaitList(anyLong())).thenReturn(1);
         // 插入报名表：返回 1 代表插入成功
         when(registrationMapper.add(any(Registration.class))).thenReturn(1);
         // 写入 Outbox 消息表：返回 1 代表成功
