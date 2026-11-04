@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.mapper.BookingMapper">
+    <!--动态SQL（仅社团管理员可操作）-->
+    <select id="listForClubAdmin" resultType="com.campus.entitys.Booking">
+        select * from booking
+        <where>
+                club_id=#{clubId}
+            <if test="status!=null">
+                and status=#{status}
+            </if>
+        </where>
+    </select>
+    <!--全部预约列表（仅场地管理员可操作）-->
+    <select id="list" resultType="com.campus.entitys.Booking">
+        select * from booking
+        <where>
+            <if test="clubId!=null">
+                club_id=#{clubId}
+            </if>
+            <if test="status!=null">
+                and status=#{status}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

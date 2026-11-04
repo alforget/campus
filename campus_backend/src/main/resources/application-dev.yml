@@ -1,0 +1,108 @@
+# 应用服务 WEB 访问端口
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 800          # 最大工作线程数，从 200 调大到 800
+      min-spare: 100    # 最小空闲线程数
+    accept-count: 2000  # 当所有线程都在忙时，允许排队的最大连接数，默认 100
+    max-connections: 10000 # 最大连接数
+
+
+
+spring:
+  flyway:
+    enabled: true
+    # 脚本存放路径（默认就是 classpath:db/migration）
+    locations: classpath:db/migration
+    # 🚨 核心配置：如果数据库不是空的，自动创建一张 flyway_schema_history 表，并把当前状态作为基线，不执行 V1 脚本，直接执行 V2 及以后的脚本
+    baseline-on-migrate: true
+    baseline-version: 1
+    # 允许执行清理（开发环境可以配置，生产环境千万别开）
+    clean-disabled: false
+  datasource:
+    url: jdbc:mysql://localhost:3306/campus_perf
+    username: root
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      connection-timeout: 5000
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        # 开启手动确认
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          # 重试 3 次
+          max-attempts: 3
+          # 重试间隔 2 秒
+          initial-interval: 2000ms
+        # 超过重试次数后，直接丢弃或进 DLQ，不再重入队
+        default-requeue-rejected: false
+    # 开启异步确认
+    publisher-confirm-type: correlated
+    # 开启路由失败退回
+    publisher-returns: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      database: 0
+# ==========================================
+# 🚨 新增：Actuator 监控配置
+# ==========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+
+# ==========================================
+# 🚨 新增：Springdoc (Swagger UI) 配置
+# ==========================================
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  # 只扫描你的 Controller 包，避免把 Actuator 的接口也扫进去
+  packages-to-scan: com.campus.controller
+
+mybatis:
+  configuration:
+    # 开启驼峰命名和下划线命名自动转换
+    map-underscore-to-camel-case: true
+jwt:
+  secret: ${JWT_SECRET}
+
+real:
+  path:
+    avatar: ${REAL_PATH_AVATAR}
+    logo: ${REAL_PATH_LOGO}
+    cover: ${REAL_PATH_COVER}
+
+web:
+  prefix:
+    avatar: ${WEB_PREFIX_AVATAR}
+    logo: ${WEB_PREFIX_LOGO}
+    cover: ${WEB_PREFIX_COVER}
+
+#上传文件白名单配置
+upload:
+  allowed-extensions: jpg,jpeg,png
+  allowed-content-types: image/jpeg,image/png

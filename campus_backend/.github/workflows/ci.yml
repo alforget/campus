@@ -1,0 +1,33 @@
+name: Java CI with Maven and Docker
+
+on:
+  push:
+    branches: [ "main", "master" ] # 只要推送到主分支就触发
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取你的代码
+      - uses: actions/checkout@v3
+
+      # 2. 安装 JDK 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      # 3. 运行你的所有测试（mvn clean test）
+      - name: Build and Test with Maven
+        run: mvn clean test -B
+        # 注意：如果在云端跑测试需要连数据库，可以在这一步配置 GitHub Actions 的 Service 容器，
+        # 但由于我们的单测都是 Mock 的，集成测试跑在 H2 上，所以直接跑即可。
+
+      # 4. 测试通过后，验证 Docker 镜像能否成功构建
+      - name: Build Docker Image
+        run: docker build -t campus-app:test .

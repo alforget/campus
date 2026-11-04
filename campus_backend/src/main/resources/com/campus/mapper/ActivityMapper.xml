@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.mapper.ActivityMapper">
+    <!--动态SQL-->
+    <select id="list" resultType="com.campus.entitys.Activity">
+        select * from activity
+        <where>
+            <if test="clubId!=null">
+                club_id=#{clubId}
+            </if>
+
+            <if test="status!=null">
+                and status=#{status}
+            </if>
+            <if test="isArchive!=null">
+                and is_archive=#{isArchive}
+            </if>
+        </where>
+    </select>
+    <!--获得活动列表 (社团管理员端)-->
+    <select id="listForClub" resultType="com.campus.entitys.Activity">
+        select * from activity
+        <where>
+            <if test="status!=null">
+                and status=#{status}
+            </if>
+            <if test="isArchive!=null">
+                and is_archive=#{isArchive}
+            </if>
+
+            and club_id=#{clubId}
+        </where>
+    </select>
+
+</mapper>

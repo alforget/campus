@@ -1,0 +1,113 @@
+services:
+    # ========== MySQL ==========
+    mysql:
+      image: mysql:8.0
+      container_name: campus-mysql
+      restart: unless-stopped
+      environment:
+        MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+        MYSQL_DATABASE: campus_dev
+        TZ: Asia/Shanghai
+      ports:
+        - "3306:3306"
+      volumes:
+        - mysql-data:/var/lib/mysql          # 数据持久化
+      command:
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+      healthcheck:
+        test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}" ]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+      networks:
+        - campus-net
+
+    # ========== Redis ==========
+    redis:
+      image: redis:7-alpine
+      container_name: campus-redis
+      restart: unless-stopped
+      command: redis-server --requirepass ${REDIS_PASSWORD}
+      ports:
+        - "6379:6379"
+      volumes:
+        - redis-data:/data                   # 数据持久化
+      healthcheck:
+        test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      networks:
+        - campus-net
+
+    # ========== RabbitMQ ==========
+    rabbitmq:
+      image: rabbitmq:3.13-management
+      container_name: campus-rabbitmq
+      restart: unless-stopped
+      environment:
+        RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+        RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      ports:
+        - "5672:5672"      # 应用连接端口
+        - "15672:15672"    # Web 管理界面端口
+      volumes:
+        - rabbitmq-data:/var/lib/rabbitmq   # 数据持久化
+      healthcheck:
+        test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
+        interval: 15s
+        timeout: 10s
+        retries: 5
+      networks:
+        - campus-net
+
+    # ========== 后端 Spring Boot ==========
+    app:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      container_name: campus-app
+      restart: unless-stopped
+      ports:
+        - "8080:8080"
+      env_file:
+        - .env                              # 从 .env 读取环境变量
+      environment:
+        # 覆盖 application.yml 中数据库/Redis/RabbitMQ 的地址，改为 Docker 服务名
+        SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/campus_dev?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+        SPRING_DATASOURCE_USERNAME: root
+        SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+        SPRING_DATA_REDIS_HOST: redis
+        SPRING_DATA_REDIS_PORT: 6379
+        SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+        SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER}
+        SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+        REAL_PATH_AVATAR: /data/www/uploads/avatar/
+        REAL_PATH_LOGO: /data/www/uploads/logo/
+        REAL_PATH_COVER: /data/www/uploads/cover/
+      volumes:
+        - upload-data:/data/www/uploads       # 上传目录挂载，容器重建不丢失文件
+      depends_on:
+        mysql:
+          condition: service_healthy          # 等 MySQL 健康后再启动
+        redis:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
+      networks:
+        - campus-net
+
+  # ========== 数据卷声明 ==========
+volumes:
+    mysql-data:
+    redis-data:
+    rabbitmq-data:
+    upload-data:
+
+  # ========== 自定义网络 ==========
+networks:
+    campus-net:
+      driver: bridge

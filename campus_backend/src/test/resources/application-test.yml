@@ -1,0 +1,60 @@
+spring:
+  # 1. 改用 H2 内存数据库，MODE=MySQL 让它支持 MySQL 语法
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # 2. 避免 Flyway 在你的 H2 库上跑 MySQL 建表脚本报错（因为我们在测试中全部 Mock 了，不需要真实表）
+  flyway:
+    enabled: false
+
+  # 3. 测试环境禁用真实的 RabbitMQ 连接
+  rabbitmq:
+    host: localhost
+    port: 5672
+    listener:
+      simple:
+        auto-startup: false
+
+  # 4. 测试环境禁用真实的 Redis 连接（由于你的集成测试里 Mock 了 Redis，这里可以不配，Spring 启动时会忽略）
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  task:
+    scheduling:
+       enabled: false
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+management:
+  endpoints:
+    web:
+    exposure:
+      include: health
+
+logging:
+  level:
+    com.campus.mapper: warn
+
+real:
+  path:
+    avatar: /tmp/avatar/
+    logo: /tmp/logo/
+    cover: /tmp/cover/
+
+web:
+  prefix:
+    avatar: /uploadAvatar/
+    logo: /uploadLogo/
+    cover: /uploadCover/
+upload:
+  allowed-extensions: jpg,jpeg,png
+  allowed-content-types: image/jpeg,image/png
+
+jwt:
+  secret: test-secret-key-for-jwt-testing-must-be-long-enough

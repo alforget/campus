@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.mapper.RegistrationMapper">
+    <!--动态SQL-->
+    <select id="list" resultType="com.campus.entitys.Registration">
+        select * from registration
+        <where>
+            <if test="activityId!=null">
+                activity_id=#{activityId}
+            </if>
+
+            <if test="status!=null">
+                and status=#{status}
+            </if>
+
+        </where>
+    </select>
+
+    <!--根据用户ID查询报名列表（学生）-->
+    <select id="listForStudent" resultType="com.campus.entitys.Registration">
+        select * from registration
+        <where>
+            <if test="activityId!=null">
+                activity_id=#{activityId}
+            </if>
+
+            <if test="status!=null">
+                and status=#{status}
+            </if>
+
+            and user_id=#{userId}
+        </where>
+    </select>
+
+    <!--全量查询报名列表-->
+    <select id="listAll" resultType="com.campus.entitys.Registration">
+        select * from registration
+        <where>
+            activity_id=#{activityId}
+
+            <if test="state!=null">
+                and state=#{state}
+            </if>
+        </where>
+    </select>
+</mapper>
